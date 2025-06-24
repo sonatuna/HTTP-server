@@ -1,3 +1,8 @@
+import Dispatcher.Context;
+import Server.HTTPRequest;
+import Server.HTTPResponse;
+import Server.HTTPStatus;
+
 import java.io.*;
 import java.net.*;
 
@@ -10,11 +15,11 @@ public class TCPServer {
 
     public void start() throws IOException {
         ServerSocket serverSocket = new ServerSocket(this.port);
-        System.out.println("Server is listening at port " + this.port);
+        System.out.println("Server is listening at port: " + this.port);
 
         while (true) {
             Socket clientSocket = serverSocket.accept();
-            System.out.println("client connected " + clientSocket.getInetAddress());
+            System.out.println("Client is connected at address: " + clientSocket.getInetAddress());
 
             handleClientData(clientSocket);
             clientSocket.close();
@@ -23,29 +28,32 @@ public class TCPServer {
     }
 
     private void handleClientData(Socket clientSocket) {
+        HTTPResponse response;
         try {
             InputStream in = clientSocket.getInputStream();
             OutputStream out = clientSocket.getOutputStream();
 
-            HTTPRequest request = new HTTPRequest(in);
-            request.printRequest();
+            try {
+                HTTPRequest request = new HTTPRequest(in);
+                request.printRequest();
 
-            String body = "<h1>Hello buggo :3</h1>";
-            String response = "HTTP/1.1 200 OK\r\n" + "Content-Type: text/html\r\n" + "Content-Length: " + body.length() + "\r\n" + "\r\n" + body;
-
-            out.write(response.getBytes());
+                Context context = new Context();
+                response = context.dispatch(request);
+            } catch (IllegalArgumentException e) {
+                response = new HTTPResponse(HTTPStatus.BAD_REQUEST, null, null);
+            }
+            response.printResponse();
+            out.write(response.toBytes());
             out.flush();
 
         } catch (IOException e) {
-            System.out.println("error handling client " + e.getMessage());
+            System.out.println("Error occurred when handling client: " + e.getMessage());
+        } finally {
+            try {
+                clientSocket.close();
+            } catch (IOException e) {
+                System.out.println("Failed to close client socket " + e.getMessage());
+            }
         }
-    }
-
-    private String createStatusString(int code) {
-        String reason = String.valueOf(HTTPStatus.fromCode(code));
-        String version = "HTTP/1.1";
-        String statusString = String.format("%s %s", version, code, reason);
-
-        return statusString;
     }
 }

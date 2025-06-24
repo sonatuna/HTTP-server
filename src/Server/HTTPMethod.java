@@ -1,3 +1,5 @@
+package Server;
+
 public enum HTTPMethod {
     GET;
 

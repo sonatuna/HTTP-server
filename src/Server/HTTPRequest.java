@@ -1,17 +1,23 @@
+package Server;
+
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
+
+
+import static java.lang.Integer.parseInt;
+import static java.lang.String.join;
+import static java.util.stream.Collectors.joining;
 
 public class HTTPRequest {
 
-    public String version;
-    public HTTPMethod method;
-    public String uri;
-    public Map<String, String> headers;
-    public String body;
+    private String version;
+    private HTTPMethod method;
+    private String uri;
+    private Map<String, String> headers;
+    private String body;
 
-    public HTTPRequest(InputStream data) throws IOException {
+    public HTTPRequest(InputStream data) throws IOException, IllegalArgumentException {
         this.parse(data);
     }
 
@@ -20,13 +26,19 @@ public class HTTPRequest {
         BufferedReader reader = new BufferedReader(inReader);
         String requestLine = reader.readLine();
 
+        if (requestLine == null || requestLine.isBlank()) {
+            throw new IllegalArgumentException();
+        }
+
         String[] requestParts = requestLine.split(" ");
         this.method = HTTPMethod.fromString(requestParts[0]);
         this.uri = requestParts[1];
+        if (uri.equals("/")) {
+            uri = "/home.html";
+        }
         this.version = requestParts[2];
 
         this.headers = new HashMap<>();
-
         String currLine = reader.readLine();
         while (currLine != null && !currLine.isEmpty()) {
             String[] headerParts = currLine.split(":");
@@ -35,7 +47,7 @@ public class HTTPRequest {
         }
 
         if (headers.containsKey("Content-Length")) {
-            int contentLength = Integer.parseInt(headers.get("Content-Length"));
+            int contentLength = parseInt(headers.get("Content-Length"));
             char[] bodyChars = new char[contentLength];
             reader.read(bodyChars);
             this.body = new String(bodyChars);
@@ -45,14 +57,34 @@ public class HTTPRequest {
     public void printRequest() {
         String formatHeaders = headers.entrySet().stream()
                 .map(entry -> entry.getKey() + ":" + entry.getValue())
-                .collect(Collectors.joining("\r\n"));
+                .collect(joining("\r\n"));
 
-        String formatRequestLine = String.join(" ", this.method.toStringMethod(), this.uri, this.version);
+        String formatRequestLine = join(" ", this.method.toStringMethod(), this.uri, this.version);
 
         String formatBody = (this.body == null) ? "" : this.body;
 
-        String formatResponse = String.join("\r\n", formatRequestLine, formatHeaders, " ", formatBody);
+        String formatRequest = join("\r\n", formatRequestLine, formatHeaders, " ", formatBody);
 
-        System.out.println(formatResponse);
+        System.out.println(formatRequest);
+    }
+
+    public String getBody() {
+        return body;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public String getUri() {
+        return uri;
+    }
+
+    public Map<String, String> getHeaders() {
+        return new HashMap<>(headers);
+    }
+
+    public HTTPMethod getMethod() {
+        return method;
     }
 }
