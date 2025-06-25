@@ -43,9 +43,11 @@ public class TCPServer {
             } catch (IllegalArgumentException e) {
                 response = new HTTPResponse(HTTPStatus.BAD_REQUEST, null, null);
             }
-            System.out.println(String.format("[RESPONSE] %s — Content-Type: %s — Length: %d bytes", response.getStatus(), response.getContentType(), response.getLength()));
+
+            System.out.println(String.format("[RESPONSE] %s %s — Content-Type: %s — Length: %d bytes", response.getStatus().getCode(), response.getStatus().getReason(), response.getContentType(), response.getLength()));
             out.write(response.responseToBytes);
             out.flush();
+
             long endTime = System.currentTimeMillis();
             long processingTime = endTime - startTime;
             System.out.println(String.format("[INFO] Response sent to %s in %d ms%n", clientSocket.getInetAddress(), processingTime));

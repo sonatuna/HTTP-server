@@ -18,6 +18,6 @@ public class ContentType {
     );
 
     public static String get(String type) {
-        return TYPES.getOrDefault(type.toLowerCase(), "text/html");
+        return TYPES.getOrDefault(type.toLowerCase(), "application/octet-stream");
     }
 }

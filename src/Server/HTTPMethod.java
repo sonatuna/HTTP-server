@@ -1,10 +1,23 @@
 package Server;
 
 public enum HTTPMethod {
-    GET;
+    GET,
+    CONNECT,
+    DELETE,
+    HEAD,
+    OPTIONS,
+    PATCH,
+    POST,
+    PUT,
+    TRACE;
+
 
     public static HTTPMethod fromString(String string) {
-        return HTTPMethod.valueOf(string.toUpperCase());
+        try {
+            return HTTPMethod.valueOf(string.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public String toStringMethod() {

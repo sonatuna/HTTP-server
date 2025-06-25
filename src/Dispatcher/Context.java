@@ -1,8 +1,10 @@
 package Dispatcher;
 import Handler.GetHandler;
-import Handler.NotFoundHandler;
+import Handler.NotImplementedHandler;
+import Server.HTTPMethod;
 import Server.HTTPRequest;
 import Server.HTTPResponse;
+import Server.HTTPStatus;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,9 +17,11 @@ public class Context {
     }
 
     public HTTPResponse dispatch(HTTPRequest request) throws IOException {
-        Strategy strategy = strategyMap.getOrDefault(request.getMethod().toStringMethod(), new NotFoundHandler());
+        HTTPMethod method = request.getMethod();
+        if (method == null) {
+            return new HTTPResponse(HTTPStatus.BAD_REQUEST, null, null);
+        }
+        Strategy strategy = strategyMap.getOrDefault(method.toStringMethod(), new NotImplementedHandler());
         return strategy.handleRequest(request);
     }
-
-
 }
