@@ -28,7 +28,7 @@ public class GetHandler implements Strategy {
             filePath = Path.of("resources", "not-found.html");
         }
         body = Files.readAllBytes(filePath);
-        response = new HTTPResponse(status, body, "text/html");
+        response = new HTTPResponse(status, body, request.getType());
         return response;
     }
 }

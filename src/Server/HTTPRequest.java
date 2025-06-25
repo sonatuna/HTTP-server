@@ -1,16 +1,13 @@
 package Server;
-
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
-
-
 import static java.lang.Integer.parseInt;
 import static java.lang.String.join;
 import static java.util.stream.Collectors.joining;
 
 public class HTTPRequest {
-
+    private String type;
     private String version;
     private HTTPMethod method;
     private String uri;
@@ -30,13 +27,18 @@ public class HTTPRequest {
             throw new IllegalArgumentException();
         }
 
+        System.out.println(requestLine);
+
         String[] requestParts = requestLine.split(" ");
         this.method = HTTPMethod.fromString(requestParts[0]);
         this.uri = requestParts[1];
         if (uri.equals("/")) {
             uri = "/home.html";
         }
+        String[] uriParts = uri.split("\\.");
+        this.type = ContentType.get(uriParts[1]);
         this.version = requestParts[2];
+
 
         this.headers = new HashMap<>();
         String currLine = reader.readLine();
@@ -86,5 +88,9 @@ public class HTTPRequest {
 
     public HTTPMethod getMethod() {
         return method;
+    }
+
+    public String getType() {
+        return this.type;
     }
 }

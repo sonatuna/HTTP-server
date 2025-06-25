@@ -5,9 +5,11 @@ import Server.HTTPStatus;
 
 import java.io.*;
 import java.net.*;
+import java.time.LocalDateTime;
 
 public class TCPServer {
     int port;
+    long startTime;
 
     public TCPServer(int port) {
         this.port = port;
@@ -19,12 +21,12 @@ public class TCPServer {
 
         while (true) {
             Socket clientSocket = serverSocket.accept();
-            System.out.println("Client is connected at address: " + clientSocket.getInetAddress());
-
+            startTime = System.currentTimeMillis();
+            LocalDateTime connectionTime = LocalDateTime.now();
+            System.out.println(String.format("[INFO] Client connected from %s at %s", clientSocket.getInetAddress(), connectionTime));
             handleClientData(clientSocket);
             clientSocket.close();
         }
-
     }
 
     private void handleClientData(Socket clientSocket) {
@@ -35,16 +37,19 @@ public class TCPServer {
 
             try {
                 HTTPRequest request = new HTTPRequest(in);
-                request.printRequest();
-
+                System.out.println("Host: " + clientSocket.getInetAddress().getHostAddress() + "\r\n" + "User-Agent: " + request.getHeaders().get("User-Agent"));
                 Context context = new Context();
                 response = context.dispatch(request);
             } catch (IllegalArgumentException e) {
                 response = new HTTPResponse(HTTPStatus.BAD_REQUEST, null, null);
             }
-            response.printResponse();
-            out.write(response.toBytes());
+            System.out.println(String.format("[RESPONSE] %s — Content-Type: %s — Length: %d bytes", response.getStatus(), response.getContentType(), response.getLength()));
+            out.write(response.responseToBytes);
             out.flush();
+            long endTime = System.currentTimeMillis();
+            long processingTime = endTime - startTime;
+            System.out.println(String.format("[INFO] Response sent to %s in %d ms%n", clientSocket.getInetAddress(), processingTime));
+
 
         } catch (IOException e) {
             System.out.println("Error occurred when handling client: " + e.getMessage());
