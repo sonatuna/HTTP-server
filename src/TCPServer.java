@@ -2,7 +2,6 @@ import Dispatcher.Context;
 import Server.HTTPRequest;
 import Server.HTTPResponse;
 import Server.HTTPStatus;
-
 import java.io.*;
 import java.net.*;
 import java.time.LocalDateTime;
@@ -41,6 +40,7 @@ public class TCPServer {
                 Context context = new Context();
                 response = context.dispatch(request);
             } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
                 response = new HTTPResponse(HTTPStatus.BAD_REQUEST, null, null);
             }
 
