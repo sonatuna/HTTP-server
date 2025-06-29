@@ -4,8 +4,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import static java.lang.Integer.parseInt;
-import static java.lang.String.join;
-import static java.util.stream.Collectors.joining;
 
 public class HTTPRequest {
     private String version;
@@ -21,7 +19,12 @@ public class HTTPRequest {
     private void parse(InputStream data) throws IOException, IllegalArgumentException {
         InputStreamReader inReader = new InputStreamReader(data);
         BufferedReader reader = new BufferedReader(inReader);
-        String requestLine = reader.readLine();
+        String requestLine = null;
+        try {
+            requestLine = reader.readLine();
+        } catch (IOException e) {
+            throw new IOException("Failed to read HTTP request line, " + e.getMessage());
+        }
 
         if (requestLine == null || requestLine.isBlank()) {
             throw new IllegalArgumentException("Invalid request: request line is empty");
@@ -38,38 +41,50 @@ public class HTTPRequest {
         this.version = requestParts[2];
 
         this.headers = new HashMap<>();
-        String currLine = reader.readLine();
+
+        String currLine = null;
+        try {
+            currLine = reader.readLine();
+        } catch (IOException e) {
+            throw new IOException("Failed to read header line, " + e.getMessage());
+        }
         while (currLine != null && !currLine.isEmpty()) {
             String[] headerParts = currLine.split(":");
+            if (headerParts.length < 2) {
+                throw new IllegalArgumentException("Invalid request: invalid headers");
+            }
             headers.put(headerParts[0].trim(), headerParts[1].trim());
-            currLine = reader.readLine();
+            try {
+                currLine = reader.readLine();
+            } catch (IOException e) {
+                throw new IOException("Failed to read header line, " + e.getMessage());
+            }
         }
 
         if (headers.containsKey("Content-Length")) {
-            int contentLength = parseInt(headers.get("Content-Length").trim());
+            int contentLength = 0;
+            if (headers.get("Content-Length") == null) {
+                throw new IllegalArgumentException("Invalid request: invalid content-length header");
+            }
+
+            try {
+                contentLength = parseInt(headers.get("Content-Length").trim());
+                if (contentLength < 0 || contentLength > 10_000_000) throw new IllegalArgumentException("Content-Length is negative or exceeds allowed limit");
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid request: invalid content-length value");
+            }
+
             char[] bodyChars = new char[contentLength];
             int totalRead = 0;
             while (totalRead < contentLength) {
                 int read = reader.read(bodyChars, totalRead, contentLength - totalRead);
-                if (read == -1) break;
+                if (read == -1) {
+                    throw new IOException("Unexpected end of stream while reading request body");
+                }
                 totalRead += read;
             }
             this.body = new String(bodyChars).getBytes(StandardCharsets.UTF_8);
         }
-    }
-
-    public void printRequest() {
-        String formatHeaders = headers.entrySet().stream()
-                .map(entry -> entry.getKey() + ":" + entry.getValue())
-                .collect(joining("\r\n"));
-
-        String formatRequestLine = join(" ", this.method.toStringMethod(), this.uri, this.version);
-
-        String formatBody = (this.body == null) ? "" : new String(body, StandardCharsets.UTF_8);
-
-        String formatRequest = join("\r\n", formatRequestLine, formatHeaders, " ", formatBody);
-
-        System.out.println(formatRequest);
     }
 
     public byte[] getBody() {

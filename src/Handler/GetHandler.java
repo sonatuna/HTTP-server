@@ -19,10 +19,13 @@ public class GetHandler implements Strategy {
         HTTPResponse response;
         byte[] body;
 
-        String[] uriParts = request.getUri().split("\\.");
+        String uri = (request.getUri().equals("/")) ? "/home.html" : request.getUri();
+        System.out.println(uri);
+        String[] uriParts = uri.split("\\.");
+        System.out.println(uriParts[1]);
         String type = ContentType.get(uriParts[1]);
 
-        String filename = request.getUri().replaceAll("^/+", "").replaceAll("/+$", "");
+        String filename = uri.replaceAll("^/+", "").replaceAll("/+$", "");
         Path filePath = Path.of("resources", filename);
         File file = filePath.toFile();
         if (file.exists()) {

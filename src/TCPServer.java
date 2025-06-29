@@ -15,52 +15,77 @@ public class TCPServer {
     }
 
     public void start() throws IOException {
-        ServerSocket serverSocket = new ServerSocket(this.port);
-        System.out.println("Server is listening at port: " + this.port);
+        ServerSocket serverSocket = null;
+        try {
+            serverSocket = new ServerSocket(this.port);
+            System.out.println("[INFO] Server is listening at port: " + this.port);
+        } catch (BindException e) {
+            System.out.println("[ERROR] Permission denied for port: " + e.getMessage());
+            System.exit(1);
+        } catch (UnknownHostException e) {
+            System.out.println("[ERROR] Failed to resolve host: " + e.getMessage());
+            System.exit(1);
+        }
 
         while (true) {
-            Socket clientSocket = serverSocket.accept();
-            startTime = System.currentTimeMillis();
-            LocalDateTime connectionTime = LocalDateTime.now();
-            System.out.println(String.format("[INFO] Client connected from %s at %s", clientSocket.getInetAddress(), connectionTime));
-            handleClientData(clientSocket);
-            clientSocket.close();
+            Socket clientSocket = null;
+            try {
+                clientSocket = serverSocket.accept();
+                LocalDateTime connectionTime = LocalDateTime.now();
+                System.out.printf("[INFO] Client connected from %s at %s%n", clientSocket.getInetAddress(), connectionTime);
+                handleClientData(clientSocket);
+            } catch (IOException e) {
+                System.out.println("[ERROR] I/O error while handling client: " + e.getMessage());
+            } finally {
+                if (clientSocket != null && !clientSocket.isClosed()) {
+                    try {
+                        clientSocket.close();
+                    } catch (IOException e) {
+                        System.out.println("[ERROR] Failed to close client socket " + e.getMessage());
+                    }
+                }
+            }
         }
     }
 
     private void handleClientData(Socket clientSocket) {
-        HTTPResponse response;
-        try {
-            InputStream in = clientSocket.getInputStream();
-            OutputStream out = clientSocket.getOutputStream();
-
+        HTTPResponse response = null;
+        try ( InputStream in = clientSocket.getInputStream();
+              OutputStream out = clientSocket.getOutputStream())
+        {
+            HTTPRequest request;
             try {
-                HTTPRequest request = new HTTPRequest(in);
-                System.out.println("Host: " + clientSocket.getInetAddress().getHostAddress() + "\r\n" + "User-Agent: " + request.getHeaders().get("User-Agent"));
+                request = new HTTPRequest(in);
+                String ua = request.getHeaders().get("User-Agent");
+                if (ua == null) {
+                    System.out.println("[WARN] Missing User-Agent header");
+                }
+                System.out.println("Host: " + clientSocket.getInetAddress().getHostAddress() + "\r\n" + "User-Agent: " + ua);
                 Context context = new Context();
+                startTime = System.currentTimeMillis();
                 response = context.dispatch(request);
             } catch (IllegalArgumentException e) {
-                System.out.println(e.getMessage());
-                response = new HTTPResponse(HTTPStatus.BAD_REQUEST, null, null);
+                byte[] errorMessage = e.getMessage().getBytes();
+                response = new HTTPResponse(HTTPStatus.BAD_REQUEST, errorMessage, "text/plain");
+            } catch (IOException e) {
+                System.out.println("[ERROR] I/O exception while handling request: " + e.getMessage());
             }
 
-            System.out.println(String.format("[RESPONSE] %s %s — Content-Type: %s — Length: %d bytes", response.getStatus().getCode(), response.getStatus().getReason(), response.getContentType(), response.getLength()));
-            out.write(response.responseToBytes);
-            out.flush();
+            if (response != null) {
+                System.out.printf("[RESPONSE] %s %s — Content-Type: %s — Length: %d bytes%n", response.getStatus().getCode(), response.getStatus().getReason(), response.getContentType(), response.getLength());
+                try {
+                    out.write(response.responseToBytes);
+                    out.flush();
+                } catch (IOException e) {
+                    System.out.println("[ERROR] I/O Error while writing response to output stream: " + e.getMessage());
+                }
+            }
 
             long endTime = System.currentTimeMillis();
             long processingTime = endTime - startTime;
-            System.out.println(String.format("[INFO] Response sent to %s in %d ms%n", clientSocket.getInetAddress(), processingTime));
-
-
+            System.out.printf("[INFO] Response sent to %s in %d ms%n%n", clientSocket.getInetAddress(), processingTime);
         } catch (IOException e) {
-            System.out.println("Error occurred when handling client: " + e.getMessage());
-        } finally {
-            try {
-                clientSocket.close();
-            } catch (IOException e) {
-                System.out.println("Failed to close client socket " + e.getMessage());
-            }
+            System.out.println("[ERROR] Error occurred getting input stream: " + e.getMessage());
         }
     }
 }
