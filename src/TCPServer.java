@@ -27,7 +27,7 @@ public class TCPServer {
         }
 
         while (true) {
-            Socket clientSocket = null;
+            Socket clientSocket;
             try {
                 clientSocket = serverSocket.accept();
                 LocalDateTime connectionTime = LocalDateTime.now();

@@ -27,12 +27,12 @@ public class PostHandler implements Strategy {
             Files.createDirectory(folderPath);
         }
 
-        Path filePath = null;
+        Path filePath;
         try {
             filePath = Path.of("resources", uri, "newfile.txt");
             Files.write(filePath, body);
             status = HTTPStatus.CREATED;
-            System.out.println(String.format("[INFO] File successfully created at %s", filePath));
+            System.out.printf("[INFO] File successfully created at %s", filePath);
         } catch (IOException e) {
             e.printStackTrace();
         }

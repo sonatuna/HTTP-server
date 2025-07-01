@@ -31,10 +31,10 @@ public class ClientHandler implements Runnable{
                 } catch (IOException e) {
                     System.out.println("[ERROR] Failed to close client socket " + e.getMessage());
                 }
+                System.out.printf("[INFO] Thread shutting down for client %s", clientSocket.getInetAddress());
+                System.out.println();
             }
         }
-        System.out.printf("[INFO] Thread shutting down for client %s", clientSocket.getInetAddress());
-        System.out.println();
     }
 
     private void handleClientData(Socket clientSocket) {

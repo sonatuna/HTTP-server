@@ -19,7 +19,7 @@ public class HTTPRequest {
     private void parse(InputStream data) throws IOException, IllegalArgumentException {
         InputStreamReader inReader = new InputStreamReader(data);
         BufferedReader reader = new BufferedReader(inReader);
-        String requestLine = null;
+        String requestLine;
         try {
             requestLine = reader.readLine();
         } catch (IOException e) {
@@ -46,7 +46,7 @@ public class HTTPRequest {
 
         this.headers = new HashMap<>();
 
-        String currLine = null;
+        String currLine;
         try {
             currLine = reader.readLine();
         } catch (IOException e) {
@@ -66,7 +66,7 @@ public class HTTPRequest {
         }
 
         if (headers.containsKey("Content-Length")) {
-            int contentLength = 0;
+            int contentLength;
             if (headers.get("Content-Length") == null) {
                 throw new IllegalArgumentException("Invalid request: invalid content-length header");
             }
@@ -93,10 +93,6 @@ public class HTTPRequest {
 
     public byte[] getBody() {
         return body;
-    }
-
-    public String getVersion() {
-        return version;
     }
 
     public String getUri() {
