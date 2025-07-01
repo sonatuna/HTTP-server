@@ -16,7 +16,7 @@ public enum HTTPMethod {
         try {
             return HTTPMethod.valueOf(string.toUpperCase());
         } catch (IllegalArgumentException e) {
-            return null;
+            throw new IllegalArgumentException("Unsupported HTTP Method: " + string);
         }
     }
 

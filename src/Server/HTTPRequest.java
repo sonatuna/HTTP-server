@@ -36,7 +36,11 @@ public class HTTPRequest {
         if (requestParts.length < 3) {
             throw new IllegalArgumentException("Invalid request: request line missing parts");
         }
-        this.method = HTTPMethod.fromString(requestParts[0]);
+        try {
+            this.method = HTTPMethod.fromString(requestParts[0]);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid request: " + e.getMessage());
+        }
         this.uri = requestParts[1];
         this.version = requestParts[2];
 
