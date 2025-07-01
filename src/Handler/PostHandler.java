@@ -13,7 +13,7 @@ import java.nio.file.Paths;
 public class PostHandler implements Strategy {
     @Override
     public HTTPResponse handleRequest(HTTPRequest request) throws IOException {
-        System.out.println("running post handler");
+        System.out.println("[INFO] Running post handler");
         String uri = request.getUri();
         byte[] body = request.getBody();
         HTTPStatus status = null;
@@ -32,7 +32,7 @@ public class PostHandler implements Strategy {
             filePath = Path.of("resources", uri, "newfile.txt");
             Files.write(filePath, body);
             status = HTTPStatus.CREATED;
-            System.out.println(String.format("File successfully created at %s", filePath));
+            System.out.println(String.format("[INFO] File successfully created at %s", filePath));
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -30,7 +30,7 @@ public class HTTPRequest {
             throw new IllegalArgumentException("Invalid request: request line is empty");
         }
 
-        System.out.println(requestLine);
+        System.out.println("[REQUEST] " + requestLine);
 
         String[] requestParts = requestLine.split(" ");
         if (requestParts.length < 3) {
