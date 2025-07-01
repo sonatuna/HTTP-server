@@ -14,15 +14,13 @@ import Server.HTTPStatus;
 public class GetHandler implements Strategy {
     @Override
     public HTTPResponse handleRequest(HTTPRequest request) throws IOException {
-        System.out.println("running get handler");
+        System.out.println("[INFO] Running get handler");
         HTTPStatus status;
         HTTPResponse response;
         byte[] body;
 
         String uri = (request.getUri().equals("/")) ? "/home.html" : request.getUri();
-        System.out.println(uri);
         String[] uriParts = uri.split("\\.");
-        System.out.println(uriParts[1]);
         String type = ContentType.get(uriParts[1]);
 
         String filename = uri.replaceAll("^/+", "").replaceAll("/+$", "");
